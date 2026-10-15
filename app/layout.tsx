@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,7 +17,22 @@ const abas = [
   { href: "/plano", rotulo: "Plano de Ação" },
 ];
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+async function contarRiscosAbertos() {
+  try {
+    const supabase = createClient(await cookies());
+    const { count } = await supabase
+      .from("riscos")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "aberto");
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const riscosAbertos = await contarRiscosAbertos();
+
   return (
     <html lang="pt-BR">
       <body>
@@ -27,6 +44,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {abas.map((aba) => (
               <Link key={aba.href} href={aba.href}>
                 {aba.rotulo}
+                {aba.href === "/riscos" && riscosAbertos > 0 && (
+                  <span className="nav-badge">{riscosAbertos}</span>
+                )}
               </Link>
             ))}
           </nav>
