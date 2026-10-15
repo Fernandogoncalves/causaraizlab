@@ -151,3 +151,33 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: default; }
 .badge-hipotese { color: var(--efeito); }
 .badge-descartada { color: var(--descartada); }
 .chip { font-size: 0.75rem; font-weight: 600; color: var(--tinta-2); background: var(--grade); padding: 0.15rem 0.5rem; border-radius: 999px; }
+
+/* Diagrama de Ishikawa */
+.seletor { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 1rem 0 0.5rem; }
+.seletor select {
+  font: inherit; color: var(--tinta); background: var(--papel-2);
+  border: 1px solid var(--grade); border-radius: var(--raio); padding: 0.45rem 0.6rem; min-width: 260px;
+}
+.seletor button {
+  font: inherit; font-weight: 600; color: var(--papel-2); background: var(--tinta);
+  border: none; border-radius: var(--raio); padding: 0.45rem 0.8rem; cursor: pointer;
+}
+.diagrama { padding: 0.5rem; overflow-x: auto; }
+.diagrama svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.diagrama .eixo { stroke: var(--tinta); stroke-width: 3; }
+.diagrama .osso { stroke: var(--tinta-2); stroke-width: 1.5; }
+.diagrama .cabeca { fill: var(--papel-2); stroke: var(--efeito); stroke-width: 2; }
+.diagrama .dim-caixa { fill: var(--papel-2); stroke: var(--tinta-2); stroke-width: 1; }
+.diagrama .dim { font: 700 12px var(--sans); fill: var(--tinta); }
+.diagrama .rotulo-svg { font: 700 10px var(--sans); fill: var(--tinta-2); letter-spacing: 0.06em; }
+.diagrama .efeito-txt { font: 600 12px var(--sans); fill: var(--tinta); }
+.diagrama .item { font: 11px var(--sans); }
+.diagrama .item.sub { font-size: 10px; }
+.diagrama .txt-validada { fill: var(--validada); font-weight: 600; }
+.diagrama .txt-hipotese { fill: var(--efeito); }
+.diagrama .txt-descartada { fill: var(--descartada); font-style: italic; }
+.diagrama .mais { font: italic 10px var(--sans); fill: var(--tinta-2); }
+.legenda { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.6rem; font-size: 0.85rem; }
+.legenda .txt-validada { color: var(--validada); }
+.legenda .txt-hipotese { color: var(--efeito); }
+.legenda .txt-descartada { color: var(--descartada); }
