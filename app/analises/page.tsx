@@ -44,6 +44,11 @@ export default async function Analises() {
       <p className="muted">
         Problema formulado como desvio observável: indicador, período, baseline e meta.
       </p>
+      <p style={{ marginTop: "1rem" }}>
+        <Link href="/analises/nova" className="botao-link">
+          + Nova análise
+        </Link>
+      </p>
 
       {analises.length === 0 ? (
         <div className="empty" style={{ marginTop: "1.5rem" }}>

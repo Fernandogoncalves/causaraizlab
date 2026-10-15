@@ -181,3 +181,19 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: default; }
 .legenda .txt-validada { color: var(--validada); }
 .legenda .txt-hipotese { color: var(--efeito); }
 .legenda .txt-descartada { color: var(--descartada); }
+
+/* Formulário de nova análise */
+.form-analise { display: grid; gap: 0.9rem; margin-top: 1.25rem; max-width: 640px; }
+.form-analise input,
+.form-analise textarea {
+  font: inherit; color: var(--tinta); background: var(--papel);
+  border: 1px solid var(--grade); border-radius: var(--raio); padding: 0.55rem 0.7rem;
+}
+.form-analise textarea { resize: vertical; }
+.linha-dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.acoes-form { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
+.botao-link {
+  display: inline-block; font-weight: 600; color: var(--papel-2); background: var(--tinta);
+  text-decoration: none; border-radius: var(--raio); padding: 0.5rem 0.9rem;
+}
+@media (max-width: 560px) { .linha-dupla { grid-template-columns: 1fr; } }
