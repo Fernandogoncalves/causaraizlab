@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { criarClienteNavegador } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Login() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function Login() {
     setErro(null);
     setEnviando(true);
 
-    const supabase = criarClienteNavegador();
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
     if (error) {

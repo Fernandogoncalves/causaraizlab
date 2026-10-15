@@ -8,7 +8,7 @@ App web de análise de causa raiz (Ishikawa) para times ágeis: causa e efeito c
 
 ```bash
 npm install
-cp .env.example .env.local   # preencher as chaves do Supabase
+cp .env.example .env.local   # preencher NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 npm run dev
 ```
 
@@ -17,7 +17,7 @@ npm run dev
 | Caminho | Conteúdo |
 |---|---|
 | `app/` | Abas: Dashboard, Análises, Diagrama, Riscos, Plano de Ação |
-| `lib/supabase/` | Clientes Supabase |
+| `utils/supabase/` | Clientes Supabase (servidor, navegador e middleware) |
 | `supabase/migrations/` | Esquema SQL (rascunho, revisar antes de aplicar) |
 
 ## Regra central
