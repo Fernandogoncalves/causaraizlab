@@ -7,6 +7,7 @@ export type ValoresFormAnalise = {
   periodo_fim?: string;
   baseline?: number;
   meta?: number;
+  resultado_medido?: number | null;
   efeito?: string | null;
 };
 
@@ -64,6 +65,17 @@ export function FormAnalise({
             <input name="meta" required inputMode="decimal" defaultValue={valores.meta} placeholder="Ex.: 5" />
           </label>
         </div>
+
+        <label className="campo">
+          <span>Resultado medido (opcional)</span>
+          <input
+            name="resultado_medido"
+            inputMode="decimal"
+            defaultValue={valores.resultado_medido ?? ""}
+            placeholder="Valor atual do indicador, após as ações"
+          />
+          <small className="muted">Preencha quando houver medição. Alimenta o comparativo antes × depois do dashboard.</small>
+        </label>
 
         <label className="campo">
           <span>Efeito observado (opcional)</span>

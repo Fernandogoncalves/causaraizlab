@@ -11,6 +11,7 @@ type Analise = {
   periodo_fim: string;
   baseline: number;
   meta: number;
+  resultado_medido: number | null;
 };
 type Hip = { analise_id: string; status: string };
 type Acao = { analise_id: string; status: string; quando: string | null };
@@ -20,11 +21,20 @@ const hoje = () => new Date().toISOString().slice(0, 10);
 
 const pct = (parte: number, total: number) => (total === 0 ? 0 : Math.round((parte * 100) / total));
 
+/** Quanto do caminho entre baseline e meta foi percorrido pelo resultado medido. */
+const pctMeta = (a: { baseline: number; meta: number; resultado_medido: number | null }) =>
+  a.resultado_medido === null || a.meta === a.baseline
+    ? 0
+    : Math.round(((a.resultado_medido - a.baseline) * 100) / (a.meta - a.baseline));
+
 export default async function Dashboard() {
   const supabase = createClient(await cookies());
 
   const [analisesR, hipR, acoesR, riscosR] = await Promise.all([
-    supabase.from("analises").select("id, titulo, indicador, periodo_inicio, periodo_fim, baseline, meta").order("titulo"),
+    supabase
+      .from("analises")
+      .select("id, titulo, indicador, periodo_inicio, periodo_fim, baseline, meta, resultado_medido")
+      .order("titulo"),
     supabase.from("hipoteses").select("analise_id, status"),
     supabase.from("acoes").select("analise_id, status, quando"),
     supabase.from("riscos").select("analise_id, probabilidade, severidade, status"),
@@ -80,6 +90,8 @@ export default async function Dashboard() {
       progresso: pct(concluidas, ac.length),
     };
   });
+
+  const medidas = analises.filter((a) => a.resultado_medido !== null && a.meta !== a.baseline);
 
   return (
     <>
@@ -153,6 +165,54 @@ export default async function Dashboard() {
           </tbody>
         </table>
       </div>
+
+      <h2 style={{ marginTop: "2.5rem" }}>Antes × depois</h2>
+      {medidas.length === 0 ? (
+        <div className="empty">
+          Nenhuma análise tem resultado medido ainda. Preencha o campo “Resultado medido” em{" "}
+          <Link href="/analises">uma análise</Link> para ver o comparativo.
+        </div>
+      ) : (
+        <div className="tabela-acoes">
+          <table>
+            <thead>
+              <tr>
+                <th>Análise</th>
+                <th>Indicador</th>
+                <th>Antes (baseline)</th>
+                <th>Depois (medido)</th>
+                <th>Meta</th>
+                <th>Meta atingida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {medidas.map((a) => {
+                const atingida = pctMeta(a);
+                return (
+                  <tr key={a.id}>
+                    <td>
+                      <Link href={`/analises/${a.id}`}>{a.titulo}</Link>
+                    </td>
+                    <td className="muted">{a.indicador}</td>
+                    <td className="mono">{a.baseline}</td>
+                    <td className="mono">{a.resultado_medido}</td>
+                    <td className="mono">{a.meta}</td>
+                    <td>
+                      <div className="progresso" aria-label={`${atingida}% da meta atingida`}>
+                        <div className="progresso-barra" style={{ width: `${Math.min(Math.max(atingida, 0), 100)}%` }} />
+                        <span>{atingida}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="muted" style={{ fontSize: "0.85rem", marginTop: "0.6rem" }}>
+        Meta atingida = (depois − antes) ÷ (meta − antes). Valores acima de 100% superam a meta; negativos indicam piora.
+      </p>
     </>
   );
 }

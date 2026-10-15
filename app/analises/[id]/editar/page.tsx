@@ -18,7 +18,7 @@ export default async function EditarAnalise({
 
   const { data: analise, error } = await supabase
     .from("analises")
-    .select("titulo, indicador, periodo_inicio, periodo_fim, baseline, meta, efeito")
+    .select("titulo, indicador, periodo_inicio, periodo_fim, baseline, meta, resultado_medido, efeito")
     .eq("id", id)
     .maybeSingle();
 

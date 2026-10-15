@@ -125,6 +125,7 @@ export type DadosAnalise = {
   periodo_fim: string;
   baseline: number;
   meta: number;
+  resultado_medido: number | null;
   efeito: string | null;
 };
 
@@ -145,6 +146,8 @@ export function lerAnalise(f: FormData): Resultado<DadosAnalise> {
   if (!baseline.ok) return baseline;
   const meta = numeroObrigatorio(f, "meta", "Meta");
   if (!meta.ok) return meta;
+  const resultado = numeroOpcional(f, "resultado_medido", "Resultado medido");
+  if (!resultado.ok) return resultado;
 
   return {
     ok: true,
@@ -155,6 +158,7 @@ export function lerAnalise(f: FormData): Resultado<DadosAnalise> {
       periodo_fim: fim,
       baseline: baseline.dados,
       meta: meta.dados,
+      resultado_medido: resultado.dados,
       efeito: textoOpcional(f, "efeito"),
     },
   };
