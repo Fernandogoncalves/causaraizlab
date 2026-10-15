@@ -1,0 +1,103 @@
+/* Causa Raiz Lab — direção visual: "papel de laboratório".
+   Papel quadriculado, tinta de engenharia, sinal de alerta para o efeito
+   e verde-petróleo para causas validadas. Sem gradientes decorativos. */
+
+:root {
+  --papel: #f6f5f0;
+  --papel-2: #ffffff;
+  --grade: #e3e2da;
+  --tinta: #1c2430;
+  --tinta-2: #5b6573;
+  --efeito: #d9482b;      /* problema / desvio observado */
+  --validada: #17707a;    /* causa validada por evidência */
+  --descartada: #9aa1ab;  /* hipótese descartada */
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --raio: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papel: #12171e;
+    --papel-2: #1a2129;
+    --grade: #232b36;
+    --tinta: #e7ebf0;
+    --tinta-2: #9aa5b3;
+    --efeito: #ff7a5c;
+    --validada: #4fc3cf;
+    --descartada: #5d6673;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--validada); }
+
+h1, h2, h3 { line-height: 1.2; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.25rem; }
+
+code, .mono { font-family: var(--mono); font-size: 0.9em; }
+
+.shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--grade);
+  background: var(--papel-2);
+}
+
+.brand {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.brand span { color: var(--efeito); }
+
+.nav { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.nav a {
+  color: var(--tinta-2);
+  text-decoration: none;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--raio);
+  font-size: 0.9rem;
+}
+.nav a[aria-current="page"],
+.nav a:hover { color: var(--tinta); background: var(--grade); }
+
+.card {
+  background: var(--papel-2);
+  border: 1px solid var(--grade);
+  border-radius: var(--raio);
+  padding: 1rem 1.1rem;
+}
+
+.muted { color: var(--tinta-2); font-size: 0.9rem; }
+
+.empty {
+  border: 1px dashed var(--grade);
+  border-radius: var(--raio);
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--tinta-2);
+}
