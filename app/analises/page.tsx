@@ -11,7 +11,10 @@ type AnaliseResumo = {
   baseline: number;
   meta: number;
   efeito: string | null;
+  resultado_medido: number | null;
 };
+
+type HipResumo = { analise_id: string; status: string };
 
 const formatarPeriodo = (inicio: string, fim: string) => {
   const f = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
@@ -20,10 +23,13 @@ const formatarPeriodo = (inicio: string, fim: string) => {
 
 export default async function Analises() {
   const supabase = createClient(await cookies());
-  const { data, error } = await supabase
-    .from("analises")
-    .select("id, titulo, indicador, periodo_inicio, periodo_fim, baseline, meta, efeito")
-    .order("titulo");
+  const [{ data, error }, { data: hipData }] = await Promise.all([
+    supabase
+      .from("analises")
+      .select("id, titulo, indicador, periodo_inicio, periodo_fim, baseline, meta, resultado_medido, efeito")
+      .order("titulo"),
+    supabase.from("hipoteses").select("analise_id, status"),
+  ]);
 
   if (error) {
     return (
@@ -37,6 +43,7 @@ export default async function Analises() {
   }
 
   const analises = (data ?? []) as AnaliseResumo[];
+  const hips = (hipData ?? []) as HipResumo[];
 
   return (
     <>
@@ -65,6 +72,16 @@ export default async function Analises() {
                   baseline {a.baseline} → meta {a.meta}
                 </span>
                 <span className="muted">{formatarPeriodo(a.periodo_inicio, a.periodo_fim)}</span>
+                <span className="muted">
+                  {(() => {
+                    const h = hips.filter((x) => x.analise_id === a.id);
+                    const validadas = h.filter((x) => x.status === "validada").length;
+                    return h.length === 0
+                      ? "Sem hipóteses ainda"
+                      : `${h.length} ${h.length === 1 ? "hipótese" : "hipóteses"} · ${validadas} validada${validadas === 1 ? "" : "s"}`;
+                  })()}
+                  {a.resultado_medido !== null && ` · resultado medido ${a.resultado_medido}`}
+                </span>
                 {a.efeito && <span className="efeito">{a.efeito}</span>}
               </Link>
             </li>

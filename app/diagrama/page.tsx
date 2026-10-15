@@ -238,6 +238,13 @@ export default async function Diagrama({
         <span className="txt-descartada">● Descartada</span>
         <span>↳ subcausa</span>
       </div>
+
+      {hips.length === 0 && (
+        <p className="muted" style={{ marginTop: "0.75rem" }}>
+          Esta análise ainda não tem hipóteses, por isso as espinhas estão vazias.{" "}
+          <Link href={`/analises/${selecionada.id}`}>Adicione as causas na página da análise</Link> para montar o diagrama.
+        </p>
+      )}
     </>
   );
 }
