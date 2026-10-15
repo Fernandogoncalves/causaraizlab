@@ -101,3 +101,29 @@ code, .mono { font-family: var(--mono); font-size: 0.9em; }
   text-align: center;
   color: var(--tinta-2);
 }
+
+/* Login */
+.login-wrap { display: grid; place-items: center; min-height: 70vh; }
+.login-card { width: min(380px, 100%); display: grid; gap: 0.9rem; }
+.campo { display: grid; gap: 0.3rem; font-size: 0.9rem; color: var(--tinta-2); }
+.campo input {
+  font: inherit;
+  color: var(--tinta);
+  background: var(--papel);
+  border: 1px solid var(--grade);
+  border-radius: var(--raio);
+  padding: 0.55rem 0.7rem;
+}
+.campo input:focus-visible { outline: 2px solid var(--validada); outline-offset: 1px; }
+button[type="submit"] {
+  font: inherit;
+  font-weight: 600;
+  color: var(--papel-2);
+  background: var(--tinta);
+  border: none;
+  border-radius: var(--raio);
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+}
+button[type="submit"]:disabled { opacity: 0.6; cursor: default; }
+.erro { color: var(--efeito); margin: 0; font-size: 0.9rem; }
