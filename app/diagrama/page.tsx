@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { SeletorAnalise } from "@/app/diagrama/seletor-analise";
 
 type Status = "hipotese" | "validada" | "descartada";
 
@@ -16,6 +17,9 @@ type Hip = {
 
 type Item = { texto: string; status: Status; subcausa: boolean };
 
+// Cada item vira uma caixa com o texto quebrado em linhas; a altura acompanha o texto.
+type Caixa = Item & { linhas: string[]; largura: number; altura: number };
+
 const DIM_TOPO = ["pessoas", "processo", "ferramentas", "dados"] as const;
 const DIM_BASE = ["dependencias", "politicas", "ambiente"] as const;
 
@@ -29,31 +33,38 @@ const ROTULO: Record<string, string> = {
   ambiente: "Ambiente",
 };
 
-// Geometria do desenho (viewBox 1000 x 510)
-const ESPINHA_Y = 280;
-const MAX_VISIVEIS = 5;
-const LARGURA_TEXTO = 26;
+// Geometria (unidades do SVG)
+const LARGURA_CAUSA = 190;
+const LARGURA_SUB = 170;
+const CARACTERES_CAUSA = 28;
+const CARACTERES_SUB = 24;
+const LINHA = 15;
+const PAD = 7;
+const GAP = 12;
+const FOLGA = 6; // distância entre a caixa e a espinha
+const ESP_X = 220; // espaçamento horizontal entre espinhas
+const LABEL_H = 26;
+const LABEL_TOPO_Y = 40;
+const INICIO_TOPO_Y = 74;
+const X_INICIO = 30;
+const X_CABECA = 1040;
+const LARGURA_CABECA = 200;
+const DESLOC_TOPO = 110; // quanto a espinha se inclina
 
-const truncar = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-
-function quebrar(texto: string, largura: number, maxLinhas: number): string[] {
+// Quebra o texto em linhas de até `largura` caracteres, sem cortar palavras.
+function quebrar(texto: string, largura: number): string[] {
   const linhas: string[] = [];
   let atual = "";
-  for (const palavra of texto.split(/\s+/)) {
+  for (const palavra of texto.trim().split(/\s+/)) {
     const candidata = atual ? `${atual} ${palavra}` : palavra;
-    if (candidata.length > largura) {
-      if (atual) linhas.push(atual);
+    if (candidata.length > largura && atual) {
+      linhas.push(atual);
       atual = palavra;
     } else {
       atual = candidata;
     }
   }
   if (atual) linhas.push(atual);
-  if (linhas.length > maxLinhas) {
-    const corte = linhas.slice(0, maxLinhas);
-    corte[maxLinhas - 1] = truncar(`${corte[maxLinhas - 1]}…`, largura);
-    return corte;
-  }
   return linhas;
 }
 
@@ -69,19 +80,15 @@ function montarItens(hips: Hip[], dimensao: string): Item[] {
   return itens;
 }
 
-const classeItem = (it: Item) => {
-  const cor =
-    it.status === "validada" ? "txt-validada" : it.status === "descartada" ? "txt-descartada" : "txt-hipotese";
-  return `item ${cor}${it.subcausa ? " sub" : ""}`;
-};
-
-const prefixo = (it: Item) => (it.subcausa ? "↳ " : "• ");
-
-// Mostra até MAX_VISIVEIS itens; se houver mais, o último slot vira "+N mais".
-function itensVisiveis(itens: Item[]) {
-  if (itens.length <= MAX_VISIVEIS) return { mostrados: itens, extras: 0 };
-  return { mostrados: itens.slice(0, MAX_VISIVEIS - 1), extras: itens.length - (MAX_VISIVEIS - 1) };
+function montarCaixas(itens: Item[]): Caixa[] {
+  return itens.map((it) => {
+    const largura = it.subcausa ? LARGURA_SUB : LARGURA_CAUSA;
+    const linhas = quebrar(it.subcausa ? `↳ ${it.texto}` : it.texto, it.subcausa ? CARACTERES_SUB : CARACTERES_CAUSA);
+    return { ...it, linhas, largura, altura: PAD * 2 + linhas.length * LINHA };
+  });
 }
+
+const alturaPilha = (caixas: Caixa[]) => caixas.reduce((s, c) => s + c.altura + GAP, 0);
 
 export default async function Diagrama({
   searchParams,
@@ -125,107 +132,133 @@ export default async function Diagrama({
     .eq("analise_id", selecionada.id);
 
   const hips = (hipData ?? []) as Hip[];
-  const topo = DIM_TOPO.map((d) => ({ dim: d, itens: montarItens(hips, d) }));
-  const base = DIM_BASE.map((d) => ({ dim: d, itens: montarItens(hips, d) }));
+
+  // Caixas por espinha e altura total do desenho (calculada a partir do conteúdo).
+  const topo = DIM_TOPO.map((d, i) => ({ dim: d, bx: 330 + i * ESP_X, caixas: montarCaixas(montarItens(hips, d)) }));
+  const base = DIM_BASE.map((d, i) => ({ dim: d, bx: 440 + i * ESP_X, caixas: montarCaixas(montarItens(hips, d)) }));
+
+  const pilhaTopo = Math.max(40, ...topo.map((g) => alturaPilha(g.caixas)));
+  const pilhaBase = Math.max(40, ...base.map((g) => alturaPilha(g.caixas)));
+
+  const espinhaY = INICIO_TOPO_Y + pilhaTopo + 24;
+  const labelBaseY = espinhaY + 24 + pilhaBase + 14;
+  const altura = labelBaseY + LABEL_H + 36;
+
+  // Espinha superior: x cresce conforme y desce até a espinha central.
+  const xTopo = (bx: number, y: number) => bx - DESLOC_TOPO + (DESLOC_TOPO * (y - (LABEL_TOPO_Y + LABEL_H))) / (espinhaY - (LABEL_TOPO_Y + LABEL_H));
+  // Espinha inferior: x diminui conforme y desce.
+  const xBase = (bx: number, y: number) => bx - (DESLOC_TOPO * (y - espinhaY)) / (labelBaseY - espinhaY);
 
   const textoEfeito = selecionada.efeito ?? selecionada.titulo;
-  const linhasEfeito = quebrar(textoEfeito, 22, 6);
+  const linhasEfeito = quebrar(textoEfeito, 24);
+  const alturaCabeca = 44 + linhasEfeito.length * 18 + 14;
+  const yCabeca = espinhaY - alturaCabeca / 2;
+
+  const classeStatus = (c: Caixa) =>
+    `caixa caixa-${c.status}${c.subcausa ? " caixa-sub" : ""}`;
 
   return (
     <>
       <h1>Diagrama de Ishikawa</h1>
 
-      <form method="get" className="seletor">
-        <label htmlFor="analise" className="rotulo">
-          Análise
-        </label>
-        <select id="analise" name="analise" defaultValue={selecionada.id}>
-          {analises.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.titulo}
-            </option>
-          ))}
-        </select>
-        <button type="submit">Ver diagrama</button>
-        <Link href={`/analises/${selecionada.id}`} className="muted">
-          Ver detalhes →
-        </Link>
-      </form>
+      <SeletorAnalise analises={analises} selecionadaId={selecionada.id} />
 
       <div className="diagrama card">
-        <svg viewBox="0 0 1000 510" role="img" aria-label={`Diagrama de Ishikawa: ${selecionada.titulo}`}>
+        <svg viewBox={`0 0 1260 ${altura}`} role="img" aria-label={`Diagrama de Ishikawa: ${selecionada.titulo}`}>
           {/* Espinha central */}
-          <line x1={40} y1={ESPINHA_Y} x2={790} y2={ESPINHA_Y} className="eixo" />
+          <line x1={X_INICIO} y1={espinhaY} x2={X_CABECA} y2={espinhaY} className="eixo" />
 
           {/* Efeito (cabeça do peixe) */}
-          <rect x={790} y={190} width={190} height={180} rx={6} className="cabeca" />
-          <text x={805} y={212} className="rotulo-svg">
+          <rect x={X_CABECA} y={yCabeca} width={LARGURA_CABECA} height={alturaCabeca} rx={6} className="cabeca" />
+          <text x={X_CABECA + 14} y={yCabeca + 20} className="rotulo-svg">
             EFEITO
           </text>
           {linhasEfeito.map((linha, i) => (
-            <text key={i} x={805} y={236 + i * 17} className="efeito-txt">
+            <text key={i} x={X_CABECA + 14} y={yCabeca + 40 + i * 18} className="efeito-txt">
               {linha}
             </text>
           ))}
 
           {/* Espinhas superiores */}
-          {topo.map((g, i) => {
-            const bx = 220 + i * 180;
-            const xTopo = bx - 90;
-            const { mostrados, extras } = itensVisiveis(g.itens);
+          {topo.map((g) => {
+            const xInicio = g.bx - DESLOC_TOPO;
+            let cursor = INICIO_TOPO_Y;
             return (
               <g key={g.dim}>
-                <line x1={xTopo} y1={90} x2={bx} y2={ESPINHA_Y} className="osso" />
-                <rect x={xTopo - 75} y={58} width={150} height={26} rx={4} className="dim-caixa" />
-                <text x={xTopo} y={75} textAnchor="middle" className="dim">
+                <line x1={xInicio} y1={LABEL_TOPO_Y + LABEL_H} x2={g.bx} y2={espinhaY} className="osso" />
+                <rect x={xInicio - 80} y={LABEL_TOPO_Y} width={160} height={LABEL_H} rx={4} className="dim-caixa" />
+                <text x={xInicio} y={LABEL_TOPO_Y + 17} textAnchor="middle" className="dim">
                   {ROTULO[g.dim]}
                 </text>
-                {mostrados.map((it, k) => {
-                  const y = 130 + k * 26;
-                  const x = xTopo + (90 * (y - 90)) / (ESPINHA_Y - 90);
-                  return (
-                    <text key={k} x={x - 8} y={y + 4} textAnchor="end" className={classeItem(it)}>
-                      {prefixo(it)}
-                      {truncar(it.texto, LARGURA_TEXTO)}
-                    </text>
-                  );
-                })}
-                {extras > 0 && (
-                  <text x={xTopo + (90 * (130 + (MAX_VISIVEIS - 1) * 26 - 90)) / (ESPINHA_Y - 90) - 8} y={130 + (MAX_VISIVEIS - 1) * 26 + 4} textAnchor="end" className="mais">
-                    +{extras} mais
+                {g.caixas.length === 0 && (
+                  <text x={xInicio + 14} y={LABEL_TOPO_Y + LABEL_H + 22} className="sem-causas">
+                    sem causas
                   </text>
                 )}
+                {g.caixas.map((c, k) => {
+                  const yTopo = cursor;
+                  const yFundo = cursor + c.altura;
+                  const meio = yTopo + c.altura / 2;
+                  const xEspinha = xTopo(g.bx, yTopo);
+                  const direita = Math.min(xEspinha, xTopo(g.bx, yFundo)) - FOLGA;
+                  const esquerda = direita - c.largura;
+                  cursor += c.altura + GAP;
+                  return (
+                    <g key={k} className={c.status === "descartada" ? "caixa-grupo caixa-grupo-descartada" : "caixa-grupo"}>
+                      <line x1={direita} y1={meio} x2={xTopo(g.bx, meio)} y2={meio} className="conector" />
+                      <rect x={esquerda} y={yTopo} width={c.largura} height={c.altura} rx={4} className={classeStatus(c)} />
+                      <text className="texto-caixa">
+                        {c.linhas.map((linha, j) => (
+                          <tspan key={j} x={esquerda + PAD} y={yTopo + PAD + LINHA * (j + 1) - 3}>
+                            {linha}
+                          </tspan>
+                        ))}
+                      </text>
+                    </g>
+                  );
+                })}
               </g>
             );
           })}
 
           {/* Espinhas inferiores */}
-          {base.map((g, i) => {
-            const bx = 310 + i * 180;
-            const xBase = bx - 90;
-            const { mostrados, extras } = itensVisiveis(g.itens);
+          {base.map((g) => {
+            const xFim = g.bx - DESLOC_TOPO;
+            let cursor = espinhaY + 24;
             return (
               <g key={g.dim}>
-                <line x1={bx} y1={ESPINHA_Y} x2={xBase} y2={470} className="osso" />
-                <rect x={xBase - 75} y={470} width={150} height={26} rx={4} className="dim-caixa" />
-                <text x={xBase} y={487} textAnchor="middle" className="dim">
+                <line x1={g.bx} y1={espinhaY} x2={xFim} y2={labelBaseY} className="osso" />
+                <rect x={xFim - 80} y={labelBaseY} width={160} height={LABEL_H} rx={4} className="dim-caixa" />
+                <text x={xFim} y={labelBaseY + 17} textAnchor="middle" className="dim">
                   {ROTULO[g.dim]}
                 </text>
-                {mostrados.map((it, k) => {
-                  const y = 300 + k * 26;
-                  const x = bx - (90 * (y - ESPINHA_Y)) / (470 - ESPINHA_Y);
-                  return (
-                    <text key={k} x={x - 8} y={y + 4} textAnchor="end" className={classeItem(it)}>
-                      {prefixo(it)}
-                      {truncar(it.texto, LARGURA_TEXTO)}
-                    </text>
-                  );
-                })}
-                {extras > 0 && (
-                  <text x={bx - (90 * (300 + (MAX_VISIVEIS - 1) * 26 - ESPINHA_Y)) / (470 - ESPINHA_Y) - 8} y={300 + (MAX_VISIVEIS - 1) * 26 + 4} textAnchor="end" className="mais">
-                    +{extras} mais
+                {g.caixas.length === 0 && (
+                  <text x={xFim + 14} y={labelBaseY - 8} className="sem-causas">
+                    sem causas
                   </text>
                 )}
+                {g.caixas.map((c, k) => {
+                  const yTopo = cursor;
+                  const yFundo = cursor + c.altura;
+                  const meio = yTopo + c.altura / 2;
+                  const xEspinha = xBase(g.bx, yFundo);
+                  const direita = Math.min(xEspinha, xBase(g.bx, yTopo)) - FOLGA;
+                  const esquerda = direita - c.largura;
+                  cursor += c.altura + GAP;
+                  return (
+                    <g key={k} className={c.status === "descartada" ? "caixa-grupo caixa-grupo-descartada" : "caixa-grupo"}>
+                      <line x1={direita} y1={meio} x2={xBase(g.bx, meio)} y2={meio} className="conector" />
+                      <rect x={esquerda} y={yTopo} width={c.largura} height={c.altura} rx={4} className={classeStatus(c)} />
+                      <text className="texto-caixa">
+                        {c.linhas.map((linha, j) => (
+                          <tspan key={j} x={esquerda + PAD} y={yTopo + PAD + LINHA * (j + 1) - 3}>
+                            {linha}
+                          </tspan>
+                        ))}
+                      </text>
+                    </g>
+                  );
+                })}
               </g>
             );
           })}

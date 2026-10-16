@@ -163,7 +163,7 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: default; }
   border: none; border-radius: var(--raio); padding: 0.45rem 0.8rem; cursor: pointer;
 }
 .diagrama { padding: 0.5rem; overflow-x: auto; }
-.diagrama svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.diagrama svg { display: block; width: 100%; height: auto; }
 .diagrama .eixo { stroke: var(--tinta); stroke-width: 3; }
 .diagrama .osso { stroke: var(--tinta-2); stroke-width: 1.5; }
 .diagrama .cabeca { fill: var(--papel-2); stroke: var(--efeito); stroke-width: 2; }
@@ -307,3 +307,15 @@ details summary { cursor: pointer; color: var(--validada); font-size: 0.9rem; }
   .grade-graficos { grid-template-columns: 1fr; }
   .donut-wrap { grid-template-columns: 1fr; justify-items: center; }
 }
+
+/* ---- Diagrama com caixas ---- */
+.diagrama .caixa { fill: var(--papel-2); stroke: var(--grade); stroke-width: 1; }
+.diagrama .caixa-validada { stroke: var(--validada); stroke-width: 1.6; fill: color-mix(in srgb, var(--validada) 14%, var(--papel-2)); }
+.diagrama .caixa-hipotese { stroke: var(--tinta-2); }
+.diagrama .caixa-descartada { stroke-dasharray: 4 3; }
+.diagrama .caixa-sub { stroke-width: 0.8; }
+.diagrama .caixa-grupo-descartada { opacity: 0.55; }
+.diagrama .texto-caixa { font: 500 12px var(--sans); fill: var(--tinta); }
+.diagrama .conector { stroke: var(--tinta-2); stroke-width: 1; }
+.diagrama .sem-causas { font: italic 11px var(--sans); fill: var(--tinta-2); }
+.diagrama .dim-caixa { fill: var(--papel-2); stroke: var(--tinta-2); stroke-width: 1; }
