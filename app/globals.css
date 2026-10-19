@@ -319,3 +319,6 @@ details summary { cursor: pointer; color: var(--validada); font-size: 0.9rem; }
 .diagrama .conector { stroke: var(--tinta-2); stroke-width: 1; }
 .diagrama .sem-causas { font: italic 11px var(--sans); fill: var(--tinta-2); }
 .diagrama .dim-caixa { fill: var(--papel-2); stroke: var(--tinta-2); stroke-width: 1; }
+
+.topbar form { margin-left: auto; }
+.botao-sair { font-size: 0.85rem; padding: 0.3rem 0.65rem; }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { sair } from "@/app/actions";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -50,6 +51,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
             ))}
           </nav>
+          <form action={sair}>
+            <button type="submit" className="botao-secundario botao-sair">
+              Sair
+            </button>
+          </form>
         </header>
         <main className="shell">{children}</main>
       </body>

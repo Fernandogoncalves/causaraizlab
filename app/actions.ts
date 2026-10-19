@@ -227,3 +227,10 @@ export async function mudarStatusRisco(analiseId: string, riscoId: string, formD
   if (error) falhar(destino, msgBanco(error, "Não foi possível mudar o status."));
   redirect(destino);
 }
+
+// ---- Sessão ------------------------------------------------------------
+
+export async function sair() {
+  await (await supabase()).auth.signOut();
+  redirect("/login");
+}
